@@ -9,11 +9,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.rxjava.R;
 import com.rxjava.interfac.HttpUrlInterface;
-import com.rxjava.utils.DownLoadImageUtils;
+import com.rxjava.utils.HttpServerUtils;
 
 import java.io.InputStream;
 
@@ -22,14 +21,9 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
-import rx.Observer;
-import rx.Scheduler;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.functions.Func1;
-import rx.observers.Observers;
-import rx.observers.Subscribers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -42,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView mImage=null;
 
     private String imageUrl="http://pic.qiantucdn.com/58pic/22/06/55/57b2d9a265f53_1024.jpg";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,11 +53,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.action:
-                initImage2();
+                initImage();
                 break;
         }
     }
 
+
+    /**
+     * 这是没有进行封装的RxJava
+     */
     private void initImage2(){
         String baseUrl=imageUrl;
         Retrofit retrofit=new Retrofit.Builder()
@@ -107,6 +106,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         mImage.setImageBitmap(bitMap);
                     }
                 });
+    }
+
+    /**
+     * 把RxJava 封装成一个工具类
+     */
+    private void initImage(){
+        HttpServerUtils.getInstance(imageUrl)
+                .getDownLoadImage(imageUrl)
+                .subscribeOn(Schedulers.newThread())    //在新的线程里面执行下载操作
+                .map(new Func1<ResponseBody, Object>() {
+                    @Override
+                    public Object call(ResponseBody responseBody) {
+                        return responseBody;
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())  //在主线程显示
+                .subscribe(new Subscriber<Object>(){
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Object object) {
+                        ResponseBody responseBody=(ResponseBody)object;
+                        InputStream is=responseBody.byteStream();
+                        Bitmap bitMap= BitmapFactory.decodeStream(is);
+                        mImage.setImageBitmap(bitMap);
+                    }
+                });
+
     }
 
 }

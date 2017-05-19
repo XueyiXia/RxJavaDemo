@@ -12,25 +12,17 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 
 public class RetrofitUtils {
+    private static Retrofit retrofit=null;
 
-    private static  RetrofitUtils mInstance=null;
+    public static Retrofit init(String baseUrl){
 
-    public static final RetrofitUtils getInstance() {
-        if(mInstance==null){
-            mInstance=new RetrofitUtils();
-        }
-        return mInstance;
-    }
-
-
-    public void init(){
-        String baseUrl="";
-        Retrofit retrofit=new Retrofit.Builder()
+        retrofit=new Retrofit.Builder()
                 .baseUrl(baseUrl) //请求的路径
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())   //添加RXJava
                 .addConverterFactory(GsonConverterFactory.create()) //返回的格式可以是一个json
                 .build();
-    }
 
+        return retrofit;
+    }
 
 }
